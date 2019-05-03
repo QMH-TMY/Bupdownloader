@@ -4,7 +4,7 @@
 # Author: Shieber, Henry
 # 
 # 说明，本程序一半由我写，另一半是借用的Henry的代码，
-# 并行下载函数download_multi，类AvSpider还有最后__name__下面是我写的，
+# 并行下载函数download_multi，选择函数get_first_last，类AvSpider还有最后__name__下面是我写的，
 # 解析视频地址下载存储是Henry的代码，我只把他的flv改成了mp4，并删了些代码。
 # 
 
@@ -264,10 +264,10 @@ def get_first_last(video_num):
         
 if __name__== "__main__":
     # 先单进程下载所有视频av号，在多进程下载视频
-    # 测试Up主av号 290526283
+    # 测试Up主UID号 17416518
     
     ############# 第一阶段：获取所有视频的av号#########################
-    avnum     = input('请输入Up主的av号: ')
+    avnum     = input('请输入Up主的UID号: ')
     driver    = webdriver.Firefox()
     avspider  = AvSpider(avnum)
     page_urls = avspider.get_all_page_urls(driver)
