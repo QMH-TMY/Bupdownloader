@@ -236,6 +236,32 @@ def download_multi(video_avs):
     pool.close()
     pool.join()
 
+def get_first_last(video_num):
+    '''获取下载起止视频数或指定视频下载个数'''
+    options = input('指定一个范围内的视频？(yes/no): ')
+    if options == 'yes' or options == 'YES':
+        try: 
+            first_num = int(input('请输入要下载视频的起始数字(1): '))
+            if first_num < 1 or first_num > video_num:
+                first_num = 0
+            else:
+                first_num -= 1
+        except ValueError:
+            first_num = 0
+        try: 
+            last_num  = int(input('请输入要下载视频的结尾数字(%d): '%video_num))
+            if last_num <0 or video_num > video_num:
+                last_num = video_num
+        except ValueError:
+            last_num = video_num
+
+        return first_num, last_num
+
+    options = input('指定若干独立视频(2,5,12): ')
+    options = options.replace(',',' ').split()
+    options = [int(i) for i in options]
+    return None, options
+        
 if __name__== "__main__":
     # 先单进程下载所有视频av号，在多进程下载视频
     # 测试Up主av号 290526283
@@ -248,15 +274,15 @@ if __name__== "__main__":
     video_num, all_video_avs = avspider.get_all_avs(page_urls,driver)
     driver.close()
 
-    #############第二阶段：多进程下载指定数量的视频####################
-    print('开始下载B站Up主%s的所有视频'%avnum)
+    #############第二阶段：设定下载数目，多进程下载视频###################
+    print('开始下载B站Up主%s的投稿视频'%avnum)
     print('视频质量：1080P，格式：mp4, 共%d个'%video_num)
 
-    desired_num = int(input('请输入要下载的个数(小于等于总个数): '))
-    if desired_num >= video_num:
-        download_num = video_num
+    first_num, last_num = get_first_last(video_num)
+    if first_num is None:
+        download_list = [all_video_avs[i-1] for i in last_num] 
     else:
-        download_num = desired_num
-    print('开始下载前%d个视频'%download_num)
+        download_list = all_video_avs[first_num:last_num]
 
-    download_multi(all_video_avs[:download_num])
+    print('开始下载指定的%d个视频'%len(download_list))
+    download_multi(download_list)
