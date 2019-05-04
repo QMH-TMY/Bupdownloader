@@ -238,7 +238,7 @@ def download_multi(video_avs):
 
 def get_first_last(video_num):
     '''获取下载起止视频数或指定视频下载个数'''
-    options = input('指定一个范围内的视频？(yes/no): ')
+    options = input('指定一个范围内的视频下载吗？(yes/no): ')
     if options == 'yes' or options == 'YES':
         try: 
             first_num = int(input('请输入要下载视频的起始数字(1): '))
@@ -257,7 +257,7 @@ def get_first_last(video_num):
 
         return first_num, last_num
 
-    options = input('指定若干独立视频(2,5,12): ')
+    options = input('请指定若干独立视频(4,8,32): ')
     options = options.replace(',',' ').split()
     options = [int(i) for i in options]
     return None, options
