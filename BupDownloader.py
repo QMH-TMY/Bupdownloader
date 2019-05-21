@@ -213,10 +213,13 @@ class AvSpider():
 
         video_avs = []
         video_ul  = soup.find('ul',class_='list-list')
+
         #第一页的第一个视频模式不同，单独处理
         video_new = video_ul.find_all('li',class_='list-item clearfix fakeDanmu-item new')
         if video_new != []:
-            video_avs.append(video_new[0]['data-aid'])
+            for new in video_new:
+                video_avs.append(new['data-aid'])
+
         #其余视频模式相同，集中处理
         video_li  = video_ul.find_all('li',class_='list-item clearfix fakeDanmu-item')
         for video in video_li:
