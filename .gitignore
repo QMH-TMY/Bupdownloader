@@ -1,1 +1,6 @@
-geckodrive.log
+*.log
+#!sx.log
+#/TODO
+#build/
+#build/*.txt
+#build/**/*.txt
