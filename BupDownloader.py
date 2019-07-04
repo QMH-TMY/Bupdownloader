@@ -227,14 +227,14 @@ class AvSpider():
 
         return video_avs
 
-def download_multi(video_avs,quality):
+def download_multi(video_avs):
     '''多进程下载'''
     if video_avs == []:
         return None
 
     pool = Pool(5)
     for av in video_avs:
-        pool.apply_async(download_control,(av,quality))
+        pool.apply_async(download_control,(av,))
 
     pool.close()
     pool.join()
@@ -271,7 +271,6 @@ if __name__== "__main__":
     
     ############# 第一阶段：获取所有视频的av号#########################
     avnum     = input('请输入Up主的UID号: ')
-    quality   = input('请输入下载视频质量(60,80): ')
     driver    = webdriver.Firefox()
     avspider  = AvSpider(avnum)
     page_urls = avspider.get_all_page_urls(driver)
@@ -289,4 +288,4 @@ if __name__== "__main__":
         download_list = all_video_avs[first_num:last_num]
 
     print('开始下载指定的%d个视频'%len(download_list))
-    download_multi(download_list,quality)
+    download_multi(download_list)
