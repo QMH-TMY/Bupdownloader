@@ -216,9 +216,13 @@ class AvSpider():
 
         #第一页的第一个视频模式不同，单独处理
         video_new = video_ul.find_all('li',class_='list-item clearfix fakeDanmu-item new')
-        if video_new != []:
-            for new in video_new:
-                video_avs.append(new['data-aid'])
+        #if video_new != []:
+        #    for new in video_new:
+        #        video_avs.append(new['data-aid'])
+
+        assert len(video_new) != 0
+        for new in video_new:
+            video_avs.append(new['data-aid'])
 
         #其余视频模式相同，集中处理
         video_li  = video_ul.find_all('li',class_='list-item clearfix fakeDanmu-item')
@@ -229,8 +233,9 @@ class AvSpider():
 
 def download_multi(video_avs):
     '''多进程下载'''
-    if video_avs == []:
-        return None
+    #if video_avs == []:
+    #    return None
+    assert len(video_avs) != 0
 
     pool = Pool(5)
     for av in video_avs:
