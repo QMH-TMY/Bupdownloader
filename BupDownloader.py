@@ -120,7 +120,7 @@ def combine_video(video_list, title):
 
 def download_control(start):
     '''视频下载调度函数'''
-    if start.isdigit() == True:    #输入的是av号
+    if start.isdigit():    #输入的是av号
         # 获取cid的api, 传入aid即可
         start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
     else:
@@ -178,7 +178,7 @@ class AvSpider():
             return page_urls
 
         last_res  = soup.find('span',class_='be-pager-total')
-        if last_res is None:
+        if not last_res:
             page_urls.append(self.start_url)
             return page_urls
 
@@ -191,7 +191,7 @@ class AvSpider():
 
     def get_all_avs(self,page_urls,driver):
         all_video_avs = []
-        if page_urls is None:
+        if not page_urls:
             return all_video_avs
 
         for page_url in page_urls:
@@ -216,7 +216,7 @@ class AvSpider():
 
         #第一页的第一个视频模式不同，单独处理
         video_new = video_ul.find_all('li',class_='list-item clearfix fakeDanmu-item new')
-        if video_new != []:
+        if video_new:
             for new in video_new:
                 video_avs.append(new['data-aid'])
 
@@ -232,7 +232,7 @@ class AvSpider():
 
 def download_multi(video_avs):
     '''多进程下载'''
-    if video_avs == []:
+    if not video_avs:
         return None
 
     pool = Pool(5)
@@ -269,10 +269,12 @@ def get_first_last(video_num):
     return None, options
         
 if __name__== "__main__":
+    #
     # 先单进程下载所有视频av号，在多进程下载视频
     # 测试Up主UID号 17416518
-    
-    ############# 第一阶段：获取所有视频的av号#########################
+    #
+
+    #############第一阶段：获取所有视频的av号##########################
     avnum     = input('请输入Up主的UID号: ')
     driver    = webdriver.Firefox()
     avspider  = AvSpider(avnum)
@@ -280,15 +282,18 @@ if __name__== "__main__":
     video_num, all_video_avs = avspider.get_all_avs(page_urls,driver)
     driver.close()
 
-    #############第二阶段：设定下载数目，多进程下载视频###################
+    #############第二阶段：设定下载数目，获取对应视频av号##############
     print('开始下载B站Up主%s的投稿视频'%avnum)
     print('视频质量：1080P，格式：mp4, 共%d个'%video_num)
 
     first_num, last_num = get_first_last(video_num)
-    if first_num is None:
+    if not first_num:
         download_list = [all_video_avs[i-1] for i in last_num] 
     else:
+        if first_num == last_num:
+            last_num += 1         #防止输入相同的数字后download_list为空
         download_list = all_video_avs[first_num:last_num]
 
-    print('开始下载指定的%d个视频'%len(download_list))
+    #############第三阶段：开始多进程下载视频##################@@@@@@@#
+    print('开始下载指定的%d个视频....'%len(download_list))
     download_multi(download_list)
