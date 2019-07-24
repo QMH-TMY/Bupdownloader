@@ -1,24 +1,12 @@
 # !/usr/bin/python3
 # -*- coding:utf-8 -*-
+# Date: 2019/05/02
+# Author: Shieber, Henry
 # 
-#    Date: 2019/05/02
-#    Author: Shieber, Henry
-#
-#                             APACHE LICENSE
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-#
-#                            Function Description
-#    一键下载Bilibili弹幕网的视频。
-#
-#    Copyright 2019 
-#    All Rights Reserved!
+# 说明，本程序一半由我写，另一半是借用的Henry的代码，
+# 并行下载函数download_multi，选择函数get_first_last，类AvSpider还有最后__name__下面是我写的，
+# 解析视频地址下载存储是Henry的代码，我只把他的flv改成了mp4，并删了些代码。
+# 
 
 '''
 项目: B站视频下载
@@ -132,7 +120,7 @@ def combine_video(video_list, title):
 
 def download_control(start):
     '''视频下载调度函数'''
-    if start.isdigit():    #输入的是av号
+    if start.isdigit() == True:    #输入的是av号
         # 获取cid的api, 传入aid即可
         start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
     else:
@@ -190,7 +178,7 @@ class AvSpider():
             return page_urls
 
         last_res  = soup.find('span',class_='be-pager-total')
-        if not last_res:
+        if last_res is None:
             page_urls.append(self.start_url)
             return page_urls
 
@@ -203,7 +191,7 @@ class AvSpider():
 
     def get_all_avs(self,page_urls,driver):
         all_video_avs = []
-        if not page_urls:
+        if page_urls is None:
             return all_video_avs
 
         for page_url in page_urls:
@@ -228,10 +216,8 @@ class AvSpider():
 
         #第一页的第一个视频模式不同，单独处理
         video_new = video_ul.find_all('li',class_='list-item clearfix fakeDanmu-item new')
-        if video_new:
-            for new in video_new:
-                video_avs.append(new['data-aid'])
 
+        assert len(video_new) != 0
         for new in video_new:
             video_avs.append(new['data-aid'])
 
@@ -244,8 +230,7 @@ class AvSpider():
 
 def download_multi(video_avs):
     '''多进程下载'''
-    if not video_avs:
-        return None
+    assert len(video_avs) != 0
 
     pool = Pool(5)
     for av in video_avs:
@@ -281,12 +266,10 @@ def get_first_last(video_num):
     return None, options
         
 if __name__== "__main__":
-    #
     # 先单进程下载所有视频av号，在多进程下载视频
     # 测试Up主UID号 17416518
-    #
-
-    #############第一阶段：获取所有视频的av号##########################
+    
+    ############# 第一阶段：获取所有视频的av号#########################
     avnum     = input('请输入Up主的UID号: ')
     driver    = webdriver.Firefox()
     avspider  = AvSpider(avnum)
@@ -294,18 +277,15 @@ if __name__== "__main__":
     video_num, all_video_avs = avspider.get_all_avs(page_urls,driver)
     driver.close()
 
-    #############第二阶段：设定下载数目，获取对应视频av号##############
+    #############第二阶段：设定下载数目，多进程下载视频###################
     print('开始下载B站Up主%s的投稿视频'%avnum)
     print('视频质量：1080P，格式：mp4, 共%d个'%video_num)
 
     first_num, last_num = get_first_last(video_num)
-    if not first_num:
+    if first_num is None:
         download_list = [all_video_avs[i-1] for i in last_num] 
     else:
-        if first_num == last_num:
-            last_num += 1         #防止输入相同的数字后download_list为空
         download_list = all_video_avs[first_num:last_num]
 
-    #############第三阶段：开始多进程下载视频##################@@@@@@@#
-    print('开始下载指定的%d个视频....'%len(download_list))
+    print('开始下载指定的%d个视频'%len(download_list))
     download_multi(download_list)
