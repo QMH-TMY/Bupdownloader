@@ -1,12 +1,24 @@
 # !/usr/bin/python3
 # -*- coding:utf-8 -*-
-# Date: 2019/05/02
-# Author: Shieber, Henry
 # 
-# 说明，本程序一半由我写，另一半是借用的Henry的代码，
-# 并行下载函数download_multi，选择函数get_first_last，类AvSpider还有最后__name__下面是我写的，
-# 解析视频地址下载存储是Henry的代码，我只把他的flv改成了mp4，并删了些代码。
-# 
+#    Date: 2019/05/02
+#    Author: Shieber, Henry
+#
+#                             APACHE LICENSE
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+#                            Function Description
+#    一键下载Bilibili弹幕网的视频。
+#
+#    Copyright 2019 
+#    All Rights Reserved!
 
 '''
 项目: B站视频下载
