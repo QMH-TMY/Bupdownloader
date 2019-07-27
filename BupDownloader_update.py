@@ -30,116 +30,82 @@ from moviepy.editor import *
 from multiprocessing import Pool
 import urllib.request as request
 
-def get_play_list(url, cid, q):
-    '''访问B站API地址'''
-    headers = {
-                'Referer': url, 
-                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
-                 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
-              }
-    entropy  = 'rbMCKn@KuamXWlPMoJGsKcbiJKUfkPF_8dABscJntvqhRSETg'
-    appk,sec = ''.join([chr(ord(i) + 2) for i in entropy[::-1]]).split(':')
-    params   = 'appkey=%s&cid=%s&otype=json&qn=%s&quality=%s&type='%(appk,cid,q,q)
-    chksum   = hashlib.md5(bytes(params+sec,'utf8')).hexdigest()
-    url_api  = 'https://interface.bilibili.com/v2/playurl?%s&sign=%s'%(params,chksum)
-    html_res = get(url_api, headers=headers).json()
-    videos   = [html_res['durl'][0]['url']]
-    return videos
+class Downloader():
+    '''视频下载器'''
+    def Schedule_cmd(self,blocknum, blocksize, totalsize):
+        '''设置下载进度条'''
+        recv_sz,fildes = blocknum * blocksize, sys.stdout
+        pervent = recv_sz / totalsize
+        percent = "%.2f%%" % (pervent * 100)
+        string  = ('*' * round(pervent * 50)).ljust(50, '-')
+        fildes.write(percent.ljust(8, ' ') + '[' + string + ']')
+        fildes.flush()
+        fildes.write('\r')
 
-def Schedule_cmd(blocknum, blocksize, totalsize):
-    '''设置下载进度条'''
-    recv_sz,fildes = blocknum * blocksize, sys.stdout
-    pervent = recv_sz / totalsize
-    percent = "%.2f%%" % (pervent * 100)
-    string  = ('*' * round(pervent * 50)).ljust(50, '-')
-    fildes.write(percent.ljust(8, ' ') + '[' + string + ']')
-    fildes.flush()
-    fildes.write('\r')
+    def get_play_list(self,url, cid, q):
+        '''访问B站API地址'''
+        headers = {
+                    'Referer': url, 
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
+                     AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+                  }
+        entropy  = 'rbMCKn@KuamXWlPMoJGsKcbiJKUfkPF_8dABscJntvqhRSETg'
+        appk,sec = ''.join([chr(ord(i) + 2) for i in entropy[::-1]]).split(':')
+        params   = 'appkey=%s&cid=%s&otype=json&qn=%s&quality=%s&type='%(appk,cid,q,q)
+        chksum   = hashlib.md5(bytes(params+sec,'utf8')).hexdigest()
+        url_api  = 'https://interface.bilibili.com/v2/playurl?%s&sign=%s'%(params,chksum)
+        html_res = get(url_api, headers=headers).json()
+        videos   = [html_res['durl'][0]['url']]
+        return videos
 
-def down_video(videos, title, url, page):
-    opener = request.build_opener()
-    opener.addheaders = [
-        ('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:56.0) \
-                Gecko/20100101 Firefox/56.0'),
-        ('Accept', '*/*'),
-        ('Accept-Language', 'en-US,en;q=0.5'),
-        ('Accept-Encoding', 'gzip, deflate, br'),
-        ('Range', 'bytes=0-'),   
-        ('Referer', url), 
-        ('Origin', 'https://www.bilibili.com'),
-        ('Connection', 'keep-alive'),
-    ]
+    def down_video(self,videos, title, url, page):
+        opener = request.build_opener()
+        opener.addheaders = [
+            ('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:56.0) \
+                    Gecko/20100101 Firefox/56.0'),
+            ('Accept', '*/*'),
+            ('Accept-Language', 'en-US,en;q=0.5'),
+            ('Accept-Encoding', 'gzip, deflate, br'),
+            ('Range', 'bytes=0-'),   
+            ('Referer', url), 
+            ('Origin', 'https://www.bilibili.com'),
+            ('Connection', 'keep-alive'),
+        ]
 
-    print('[正在下载P{}段视频,.....]:'.format(page) + title)
-    num = 1
-    VideoPath = join(sys.path[0], 'videos', title) 
-    for url in videos:
-        request.install_opener(opener)
-        if not exists(VideoPath):
-            os.makedirs(VideoPath)
+        print('[正在下载P{}段视频,.....]:'.format(page) + title)
+        num = 1
+        VideoPath = join(sys.path[0], 'videos', title) 
+        for url in videos:
+            request.install_opener(opener)
+            if not exists(VideoPath):
+                os.makedirs(VideoPath)
 
+            if len(videos) > 1:
+                request.urlretrieve(url=url,filename=join(VideoPath,
+                    r'{}-{}.mp4'.format(title, num)),reporthook=self.Schedule_cmd)  
+            else:
+                request.urlretrieve(url=url,filename=join(VideoPath,
+                    r'{}.mp4'.format(title)),reporthook=self.Schedule_cmd)  
+            num += 1
+
+    def combine_video(self,videos, title):
+        '''合并视频'''
+        VideoPath = join(sys.path[0], 'bilibili_video', title)
         if len(videos) > 1:
-            request.urlretrieve(url=url,filename=join(VideoPath,
-                r'{}-{}.mp4'.format(title, num)),reporthook=Schedule_cmd)  
+            print("[下载:%s完成,正在合并...]:"%title)
+            VideoL = []
+            rt     = VideoPath
+            for f in sorted(os.listdir(rt),key=lambda x:int(x[x.rindex("-")+1:x.rindex(".")])):
+                if splitext(f)[1] == '.flv':
+                    flPath = join(rt, f)
+                    video  = VideoFileClip(flPath)
+                    VideoL.append(video)
+            clip = concatenate_videoclips(VideoL)
+            clip.to_videofile(join(rt, r'{}.mp4'.format(title)), fps=24, remove_temp=False)
+            print("[视频:%s合并完成...]"%title)
         else:
-            request.urlretrieve(url=url,filename=join(VideoPath,
-                r'{}.mp4'.format(title)),reporthook=Schedule_cmd)  
-        num += 1
+            print("[视频:%s合并完成...]"%title)
 
-def combine_video(videos, title):
-    '''合并视频'''
-    VideoPath = join(sys.path[0], 'bilibili_video', title)
-    if len(videos) > 1:
-        print("[下载:%s完成,正在合并...]:"%title)
-        VideoL = []
-        rt     = VideoPath
-        for f in sorted(os.listdir(rt),key=lambda x: int(x[x.rindex("-")+1:x.rindex(".")])):
-            if splitext(f)[1] == '.flv':
-                flPath = join(rt, f)
-                video  = VideoFileClip(flPath)
-                VideoL.append(video)
-        clip = concatenate_videoclips(VideoL)
-        clip.to_videofile(join(rt, r'{}.mp4'.format(title)), fps=24, remove_temp=False)
-        print("[视频:%s合并完成...]"%title)
-    else:
-        print("[视频:%s合并完成...]"%title)
-
-def download_control(av):
-    '''视频下载调度函数'''
-    quality = '80'              
-    headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
-                 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
-              }
-    if av.isdigit():   
-        st = av 
-    else:
-        st = re.search(r'/av(\d+)/*', av).group(1)
-    url = 'https://api.bilibili.com/x/web-interface/view?aid='+st
-    
-    html = get(url, headers=headers).json()
-    data = html['data']
-    cid_list = []             
-    if '?p=' in av:
-        P = re.search(r'\?p=(\d+)',av).group(1)
-        cid_list.append(data['pages'][int(P) - 1])
-    else:
-        cid_list = data['pages']
-
-    for item in cid_list:
-        cid, title= str(item['cid']), item['part']
-        title  = re.sub(r'[\/\\:*?"<>|]', '', title)  
-        print('[cid]:%s\n[标题]:%s' %(cid, title))
-
-        page   = str(item['page'])
-        url   +=  "/?p=" + page
-        videos = get_play_list(url, cid, quality)
-        down_video(videos, title, url, page)
-        combine_video(videos, title)
-
-    VideoPath = join(sys.path[0], 'bilibili_video')
-    if sys.platform.startswith('win'):
-        os.startfile(VideoPath)
 
 class AvSpider():
     '''
@@ -215,17 +181,6 @@ class AvSpider():
 
         return video_avs
 
-def download_multi(video_avs):
-    '''多进程下载'''
-    if not video_avs:
-        return None
-
-    pool = Pool(10)
-    for av in video_avs:
-        pool.apply_async(download_control,(av,))
-    pool.close()
-    pool.join()
-
 def get_first_last(video_num):
     '''获取下载起止视频数'''
     print('...............................................')
@@ -254,7 +209,57 @@ def get_first_last(video_num):
     opt = opt.replace(',',' ').split()
     opt = [int(op) for op in opt]
     return None, opt
+
+def download_control(av):
+    '''视频下载调度函数'''
+    quality = '80'              
+    headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
+                 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+              }
+    if av.isdigit():   
+        st = av 
+    else:
+        st = re.search(r'/av(\d+)/*', av).group(1)
+    url = 'https://api.bilibili.com/x/web-interface/view?aid='+st
+    
+    html = get(url, headers=headers).json()
+    data = html['data']
+    cid_list = []             
+    if '?p=' in av:
+        P = re.search(r'\?p=(\d+)',av).group(1)
+        cid_list.append(data['pages'][int(P) - 1])
+    else:
+        cid_list = data['pages']
+
+    for item in cid_list:
+        cid, title= str(item['cid']), item['part']
+        title  = re.sub(r'[\/\\:*?"<>|]', '', title)  
+        print('[cid]:%s\n[标题]:%s' %(cid, title))
+
+        page   = str(item['page'])
+        url   +=  "/?p=" + page
+
+        downloader = Downloader()
+        videos = downloader.get_play_list(url, cid, quality)
+        downloader.down_video(videos, title, url, page)
+        downloader.combine_video(videos, title)
+
+    VideoPath = join(sys.path[0], 'bilibili_video')
+    if sys.platform.startswith('win'):
+        os.startfile(VideoPath)
         
+def download_multi(video_avs):
+    '''多进程下载'''
+    if not video_avs:
+        return None
+
+    pool = Pool(10)
+    for av in video_avs:
+        pool.apply_async(download_control,(av,))
+    pool.close()
+    pool.join()
+
 if __name__== "__main__":
     # 先单进程下载所有视频av号，在多进程下载视频
     # 测试Up主av号 415479453
