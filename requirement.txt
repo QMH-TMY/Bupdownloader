@@ -1,3 +1,4 @@
+#sudo pip3 install xxxpackage
 bs4 
 json
 urllib
@@ -5,3 +6,7 @@ hashlib
 moviepy
 requests 
 selenium
+pyvirtualdisplay 
+
+#sudo apt-get install xvfb
+xvfb  
