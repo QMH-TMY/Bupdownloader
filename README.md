@@ -1,9 +1,9 @@
 ------------
 # 兼容系统 #
 ------------
-	Unix
-	Linux
+	Mac OS
 	Windows
+	Unix-like OS
 
 --------
 # 描述 #
